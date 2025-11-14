@@ -61,3 +61,31 @@ npm run build
 ```
 
 The frontend builds to `dist/`, and you'll need to deploy the Express server separately.
+
+## Deployment
+
+### Frontend (Vercel)
+
+1. Push your code to GitHub
+2. Connect your repo to Vercel
+3. Vercel will auto-detect Vite — no config needed
+4. Add environment variable:
+   - `VITE_MAPBOX_TOKEN` — your Mapbox public token
+   - `VITE_API_URL` — your backend URL (e.g., `https://your-app.onrender.com`)
+
+The `server/` folder is ignored during build — Vercel only builds the frontend.
+
+### Backend (Render)
+
+1. Connect your GitHub repo to Render
+2. Choose "Web Service"
+3. Settings:
+   - **Build Command:** `npm install`
+   - **Start Command:** `node ./server/index.js`
+4. Add environment variables:
+   - `MAPBOX_ACCESS_TOKEN`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `PORT` (Render will set this automatically, but you can use `5174` as fallback)
+
+Once deployed, update `VITE_API_URL` in Vercel to point to your Render backend URL.

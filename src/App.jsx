@@ -7,6 +7,8 @@ import Hero from './Hero'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_DEV_TOKEN_HERE'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+
 const palette = {
   maker: '#34d399',
   cowork: '#6366f1',
@@ -78,7 +80,7 @@ export default function App() {
       setError(null)
 
       try {
-        const response = await fetch('/api/spaces')
+        const response = await fetch(`${API_BASE_URL}/api/spaces`)
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`)
         }
