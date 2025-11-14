@@ -81,11 +81,12 @@ The `server/` folder is ignored during build — Vercel only builds the frontend
 2. Choose "Web Service"
 3. Settings:
    - **Build Command:** `npm install`
-   - **Start Command:** `node ./server/index.js`
+   - **Start Command:** `npm start` (or `node ./server/index.js`)
+   - **Health Check Path:** `/health` (optional but recommended)
 4. Add environment variables:
    - `MAPBOX_ACCESS_TOKEN`
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
-   - `PORT` (Render will set this automatically, but you can use `5174` as fallback)
+   - `PORT` (Render sets this automatically, but `5174` is the fallback)
 
-Once deployed, update `VITE_API_URL` in Vercel to point to your Render backend URL.
+Once deployed, update `VITE_API_URL` in Vercel to point to your Render backend URL (e.g., `https://your-app.onrender.com`).

@@ -10,6 +10,10 @@ const port = process.env.PORT || 5174
 app.use(cors())
 app.use(express.json())
 
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
 app.get('/api/spaces', async (_req, res) => {
   try {
     const spaces = await listSpaces()
@@ -79,8 +83,8 @@ app.get('/api/geocode', async (req, res) => {
   }
 })
 
-app.listen(port, () => {
-  console.log(`API server listening on http://localhost:${port}`)
+app.listen(port, '0.0.0.0', () => {
+  console.log(`API server listening on port ${port}`)
 })
 
 process.on('unhandledRejection', (reason) => {
