@@ -11,7 +11,7 @@ export default function About() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="masthead-left">
-          <div className="mark">TO</div>
+          <img src="/favicon.jpg" alt="In-Between" className="mark" />
           <div className="masthead-copy">
             <span>In-Between Studio</span>
             <strong>About Us</strong>
