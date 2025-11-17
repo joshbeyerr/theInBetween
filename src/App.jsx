@@ -35,6 +35,7 @@ export default function App() {
   const [selected, setSelected] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const focusPlace = useCallback((place, { withPopup = true, animate = true } = {}) => {
     if (!place) return
@@ -140,7 +141,7 @@ export default function App() {
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
+      style: 'mapbox://styles/mapbox/streets-v12',
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       pitch: 0,
@@ -339,6 +340,13 @@ export default function App() {
               <h3>Directory</h3>
               <span className="count">{isLoading ? 'Loading…' : `${places.length} spots`}</span>
             </div>
+            <input
+              type="text"
+              className="directory-search"
+              placeholder="Search spaces..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <div className="directory-body">
               {error && (
                 <div className="directory-error">
@@ -347,7 +355,11 @@ export default function App() {
               )}
               {!error && (
                 <ul className="directory-list">
-                  {places.map((place, index) => (
+                  {places
+                    .filter((place) =>
+                      place.name.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((place, index) => (
                     <motion.li
                       key={place.id}
                       initial={{ opacity: 0, y: 12 }}
@@ -381,6 +393,11 @@ export default function App() {
                   ))}
                   {!isLoading && places.length === 0 && (
                     <li className="directory-empty">No spaces yet — populate the Supabase table to see them here.</li>
+                  )}
+                  {!isLoading && places.length > 0 && places.filter((place) =>
+                    place.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).length === 0 && (
+                    <li className="directory-empty">No spaces found matching "{searchQuery}"</li>
                   )}
                 </ul>
               )}
