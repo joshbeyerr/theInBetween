@@ -274,8 +274,8 @@ export default function App() {
         const el = document.createElement('button')
         el.className = 'pill-marker'
         el.textContent = p.name
-        // Neon orange markers to match the map section background
-        el.style.background = '#2434ab'
+ 
+        el.style.background = '#1c32de'
 
         el.addEventListener('mouseenter', () => el.classList.add('hover'))
         el.addEventListener('mouseleave', () => el.classList.remove('hover'))
