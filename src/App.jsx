@@ -2,12 +2,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { motion } from 'framer-motion'
-
-import Hero from './Hero'
+import horizPhoto from './assets/mapPhotos/horizPhoto.jpg'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_DEV_TOKEN_HERE'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+const DEFAULT_CENTER = [-79.3832, 43.6532]
+const DEFAULT_ZOOM = 11
+
+// Load first two images from assets/photos (png/jpg/jpeg/webp/gif)
+const photoImports = import.meta.glob('./assets/photos/*.{png,jpg,jpeg,webp,gif}', { eager: true, as: 'url' })
+const MASTHEAD_PHOTOS = Object.values(photoImports).slice(0, 5)
 
 const palette = {
   maker: '#34d399',
@@ -136,8 +141,8 @@ export default function App() {
     const map = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center: [-79.3832, 43.6532],
-      zoom: 11,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
       pitch: 0,
       bearing: 0,
       attributionControl: false,
@@ -146,6 +151,42 @@ export default function App() {
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left')
     map.addControl(new mapboxgl.FullscreenControl(), 'top-left')
     map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true }), 'top-left')
+    // Recenter control
+    class RecenterControl {
+      onAdd(m) {
+        this._map = m
+        this._container = document.createElement('div')
+        this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group'
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.setAttribute('aria-label', 'Recenter map')
+        btn.innerHTML = '⌖'
+        btn.style.fontSize = '16px'
+        btn.addEventListener('click', () => {
+          const map = this._map
+          const ids = Object.keys(markersRef.current || {})
+          if (ids.length > 0) {
+            const b = new mapboxgl.LngLatBounds()
+            ids.forEach((id) => {
+              const mk = markersRef.current[id]
+              try { b.extend(mk.getLngLat()) } catch {}
+            })
+            if (!b.isEmpty()) {
+              map.fitBounds(b, { padding: 80, duration: 700 })
+              return
+            }
+          }
+          map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 700 })
+        })
+        this._container.appendChild(btn)
+        return this._container
+      }
+      onRemove() {
+        this._container.parentNode && this._container.parentNode.removeChild(this._container)
+        this._map = undefined
+      }
+    }
+    map.addControl(new RecenterControl(), 'top-left')
 
     mapRef.current = map
 
@@ -179,7 +220,8 @@ export default function App() {
         const el = document.createElement('button')
         el.className = 'pill-marker'
         el.textContent = p.name
-        el.style.background = palette[p.paletteKey] || palette.default
+        // Neon orange markers to match the map section background
+        el.style.background = '#2434ab'
 
         el.addEventListener('mouseenter', () => el.classList.add('hover'))
         el.addEventListener('mouseleave', () => el.classList.remove('hover'))
@@ -235,12 +277,39 @@ export default function App() {
             <strong>Field Notes / 2025</strong>
           </div>
         </div>
+        <div className="masthead-photos">
+          {MASTHEAD_PHOTOS.map((src, i) => (
+            <img key={i} src={src} alt="" className="masthead-photo" />
+          ))}
+        </div>
         <div className="masthead-right">
-          <span>Toronto, Canada</span>
+          <a href="/about" className="navlink">About us</a>
+          <span style={{ margin: '0 8px', opacity: .35 }}>•</span>
+          <a
+            href="#how-we-work"
+            className="navlink"
+            onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('how-we-work')?.scrollIntoView({ behavior: 'smooth' })
+            }}
+          >
+            How we work
+          </a>
+          <span style={{ margin: '0 8px', opacity: .35 }}>•</span>
+          <a
+            href="#submission"
+            className="navlink"
+            onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('submission')?.scrollIntoView({ behavior: 'smooth' })
+            }}
+          >
+            Submit
+          </a>
         </div>
       </motion.header>
 
-      <Hero />
+
 
       <motion.section
         className="section map-section"
@@ -253,7 +322,7 @@ export default function App() {
           <div className="section-label">Directory Map</div>
           <h2>Navigate the creative corridor</h2>
           <p>
-            Tap a location from the list or the map to zoom in. Each marker reveals a micro-story and quick link out to
+            Tap a location from the list or the map to zoom in. Each marker reveals a micro-story and a link to
             the space.
           </p>
         </div>
@@ -328,7 +397,209 @@ export default function App() {
         </motion.div>
       </motion.section>
 
+      <motion.section
+        id="how-we-work"
+        className="section info-section"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="section-heading-wrapper">
+          <div className="section-heading">
+            <div className="section-label">How we work</div>
+            <h2>Simple, community‑forward curation</h2>
+            <p>
+              We keep the list small and useful. If you run a space or think one should be added, reach out!
+              We will verify details and pop it on the map.
+            </p>
+          </div>
+          <div className="section-heading-image-wrapper">
+            <div className="section-heading-image-bg"></div>
+            <img src={horizPhoto} alt="" className="section-heading-image" />
+          </div>
+        </div>
+        <div className="info-grid">
+          <div className="info-card">
+            <h3>Transparent access</h3>
+            <p>We highlight pricing/access upfront so you know what to expect before you visit.</p>
+          </div>
+          <div className="info-card">
+            <h3>Lightweight vibes</h3>
+            <p>Each card has a quick "vibes" note to help you pick the right fit.</p>
+          </div>
+          <div className="info-card">
+            <h3>Open data</h3>
+            <p>Data lives in Supabase; geocoding is via Mapbox. Easy to extend later.</p>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        id="submission"
+        className="section info-section"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        viewport={{ once: true, amount: 0.2 }}
+      >
+        <div className="section-heading">
+          <div className="section-label">Submit a Space</div>
+          <h2>Know a space we should add?</h2>
+          <p>
+            Found a creative space that should be on the map? Submit it below and we'll review it.
+            We'll verify the details and add it to the directory.
+          </p>
+        </div>
+
+        <SubmissionForm />
+      </motion.section>
+
       <footer className="credit">Map © Mapbox · OpenStreetMap</footer>
     </div>
+  )
+}
+
+function SubmissionForm() {
+  const [formData, setFormData] = useState({
+    spaceName: '',
+    address: '',
+    additionalInfo: '',
+    email: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState({ type: null, message: '' })
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setSubmitStatus({ type: null, message: '' })
+
+    try {
+      // Use proxy path if API_BASE_URL is not set (for dev), otherwise use full URL
+      const url = API_BASE_URL ? `${API_BASE_URL}/api/submissions` : '/api/submissions'
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response:', text.substring(0, 200))
+        throw new Error(`Server returned ${response.status}. Please make sure the server is running.`)
+      }
+
+      if (!response.ok) {
+        // Try to parse error, but handle HTML responses
+        let errorMessage = 'Failed to submit'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          // If response is not JSON (e.g., HTML error page), use status text
+          errorMessage = `Server error: ${response.status} ${response.statusText}`
+        }
+        throw new Error(errorMessage)
+      }
+
+      const data = await response.json()
+      setSubmitStatus({ type: 'success', message: 'Thank you! Your submission has been received. We\'ll review it and get back to you soon.' })
+      
+      // Reset form
+      setFormData({
+        spaceName: '',
+        address: '',
+        additionalInfo: '',
+        email: '',
+      })
+    } catch (err) {
+      setSubmitStatus({ type: 'error', message: err.message })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="submission-form">
+      <div className="submission-form-grid">
+        <div className="submission-form-group">
+          <label htmlFor="spaceName">
+            Space Name <span className="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="spaceName"
+            name="spaceName"
+            value={formData.spaceName}
+            onChange={handleChange}
+            required
+            placeholder="e.g., Maker Space Toronto"
+          />
+        </div>
+
+        <div className="submission-form-group">
+          <label htmlFor="address">Address</label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            placeholder="e.g., 123 Main St, Toronto, ON"
+          />
+        </div>
+
+        <div className="submission-form-group submission-form-group-full">
+          <label htmlFor="additionalInfo">Additional Info</label>
+          <textarea
+            id="additionalInfo"
+            name="additionalInfo"
+            value={formData.additionalInfo}
+            onChange={handleChange}
+            rows="4"
+            placeholder="Vibes, hours, pricing, website, or any other useful information..."
+          />
+        </div>
+
+        <div className="submission-form-group submission-form-group-full">
+          <label htmlFor="email">
+            Email <span className="required">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            placeholder="your.email@example.com"
+          />
+          <small>We'll use this to follow up about your submission.</small>
+        </div>
+      </div>
+
+      {submitStatus.message && (
+        <div className={`submission-status submission-status-${submitStatus.type}`}>
+          {submitStatus.message}
+        </div>
+      )}
+
+      <div className="submission-form-actions">
+        <button type="submit" disabled={isSubmitting} className="submission-submit-btn">
+          {isSubmitting ? 'Submitting...' : 'Submit Space'}
+        </button>
+      </div>
+    </form>
   )
 }
