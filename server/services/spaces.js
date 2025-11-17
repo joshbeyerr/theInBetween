@@ -17,46 +17,13 @@ export const mapSpace = (space) => ({
   createdAt: space.created_at,
 })
 
-const ensureSpaceHasCoords = async (space) => {
-  const hasLat = isValidCoord(space.lat)
-  const hasLng = isValidCoord(space.long)
-
-  if (hasLat && hasLng) return space
-  if (!space.address) return space
-
-  try {
-    const result = await geocodeAddress(space.address)
-    if (!result) return space
-
-    const { lat, lng } = result
-
-    const { data, error } = await supabase
-      .from('spaces')
-      .update({ lat, long: lng })
-      .eq('id', space.id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error(`Failed to persist coords for space ${space.id}`, error)
-      return { ...space, lat, long: lng }
-    }
-
-    return data
-  } catch (err) {
-    console.error(`Geocoding failed for space ${space.id}`, err)
-    return space
-  }
-}
-
 export const listSpaces = async () => {
   if (!supabase) throw new Error('Supabase client not configured')
 
   const { data, error } = await supabase.from('spaces').select('*').order('created_at', { ascending: false })
   if (error) throw error
 
-  const spaces = data ?? []
-  return Promise.all(spaces.map(ensureSpaceHasCoords))
+  return data ?? []
 }
 
 export const fetchSpaceById = async (id) => {
@@ -66,7 +33,7 @@ export const fetchSpaceById = async (id) => {
   if (error) throw error
   if (!data) return null
 
-  return ensureSpaceHasCoords(data)
+  return data
 }
 
 export const updateSpaceCoords = async (id, lat, lng) => {
