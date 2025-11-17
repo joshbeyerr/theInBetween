@@ -359,6 +359,8 @@ export default function App() {
           >
             Submit
           </a>
+          <span style={{ margin: '0 8px', opacity: .35 }}>•</span>
+          <a href="/login" className="navlink">Login</a>
         </div>
       </motion.header>
 

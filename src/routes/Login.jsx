@@ -31,7 +31,7 @@ export default function Login() {
         <div className="section-heading">
           <div className="section-label">Account</div>
           <h2>Login</h2>
-          <p>Authentication coming soon. This page is a placeholder.</p>
+          <p>Authentication coming soon. Sign in will give you access to deeper insights on spaces, user reviews, and more features.</p>
         </div>
       </motion.section>
 
