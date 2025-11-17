@@ -35,6 +35,7 @@ export default function App() {
   const [selected, setSelected] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [mapError, setMapError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
 
   const focusPlace = useCallback((place, { withPopup = true, animate = true } = {}) => {
@@ -144,7 +145,7 @@ export default function App() {
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
     
     if (!gl) {
-      setError('Your browser does not support WebGL, which is required to display the map. Please try using a different browser.')
+      setMapError('Your browser does not support WebGL, which is required to display the map. Please try using a different browser.')
       setIsLoading(false)
       return
     }
@@ -166,9 +167,9 @@ export default function App() {
       map.on('error', (e) => {
         console.error('Mapbox error:', e)
         if (e.error?.message?.includes('WebGL') || e.error?.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
-          setError('Your device may not support the required graphics features. Please try using a different browser or device.')
+          setMapError('Your device may not support the required graphics features. Please try using a different browser or device.')
         } else {
-          setError('There was an error loading the map. Please try refreshing the page.')
+          setMapError('There was an error loading the map. Please try refreshing the page.')
         }
         setIsLoading(false)
       })
@@ -218,9 +219,9 @@ export default function App() {
     } catch (err) {
       console.error('Failed to initialize map:', err)
       if (err.message?.includes('WebGL') || err.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
-        setError('Your device may not support the required graphics features. Please try using a different browser or device.')
+        setMapError('Your device may not support the required graphics features. Please try using a different browser or device.')
       } else {
-        setError('Failed to load the map. Please try refreshing the page.')
+        setMapError('Failed to load the map. Please try refreshing the page.')
       }
       setIsLoading(false)
       return
@@ -326,8 +327,8 @@ export default function App() {
         <div className="masthead-left">
           <div className="mark">TO</div>
           <div className="masthead-copy">
-            <span>In-Between Studio</span>
-            <strong>Field Notes / 2025</strong>
+            <span>The In-Between Project</span>
+            <strong>Updated November 2025</strong>
           </div>
         </div>
         <div className="masthead-photos">
@@ -407,7 +408,7 @@ export default function App() {
                   <strong>Heads up:</strong> {error}
                 </div>
               )}
-              {!error && (
+              {!error && places.length > 0 && (
                 <ul className="directory-list">
                   {places
                     .filter((place) =>
@@ -462,8 +463,33 @@ export default function App() {
             whileHover={{ scale: 1.01, translateY: -4 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div ref={mapContainerRef} className="map" />
-            <div className="map-grain" />
+            {mapError ? (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                height: '100%', 
+                padding: '40px',
+                background: '#f9fafb',
+                border: '1px solid #E7E4E6',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: '#dc2626' }}>
+                    Map Unavailable
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'rgba(0,0,0,0.6)' }}>
+                    {mapError}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div ref={mapContainerRef} className="map" />
+                <div className="map-grain" />
+              </>
+            )}
           </motion.div>
         </motion.div>
       </motion.section>
