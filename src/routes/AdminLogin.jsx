@@ -11,23 +11,34 @@ export default function AdminLogin() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    if (!supabaseClient) return
+
     // Check if user is already logged in and redirect if admin
-    supabaseClient?.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    supabaseClient.auth.getSession().then((response) => {
+      const session = response?.data?.session
+      if (session?.user?.id) {
         checkAdminStatus(session.user.id)
       }
+    }).catch((err) => {
+      console.error('Error getting session:', err)
     })
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabaseClient?.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        checkAdminStatus(session.user.id)
-      }
-    })
+    let authSubscription = null
+    if (supabaseClient) {
+      const subscriptionResult = supabaseClient.auth.onAuthStateChange((_event, session) => {
+        if (session?.user?.id) {
+          checkAdminStatus(session.user.id)
+        }
+      })
+      authSubscription = subscriptionResult?.data?.subscription
+    }
 
-    return () => subscription?.unsubscribe()
+    return () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe()
+      }
+    }
   }, [])
 
   const checkAdminStatus = async (userId) => {

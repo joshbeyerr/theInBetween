@@ -54,7 +54,8 @@ export default function Admin() {
       }
 
       try {
-        const { data: { session } } = await supabaseClient.auth.getSession()
+        const response = await supabaseClient.auth.getSession()
+        const session = response?.data?.session
         
         if (!session) {
           navigate('/admin-login')
@@ -85,15 +86,21 @@ export default function Admin() {
     checkAuth()
 
     // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabaseClient?.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/admin-login')
-      }
-    })
+    let authSubscription = null
+    if (supabaseClient) {
+      const subscriptionResult = supabaseClient.auth.onAuthStateChange((_event, session) => {
+        if (!session) {
+          navigate('/admin-login')
+        }
+      })
+      authSubscription = subscriptionResult?.data?.subscription
+    }
 
-    return () => subscription?.unsubscribe()
+    return () => {
+      if (authSubscription) {
+        authSubscription.unsubscribe()
+      }
+    }
   }, [navigate])
 
   const handleChange = (e) => {
