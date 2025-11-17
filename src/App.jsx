@@ -30,6 +30,7 @@ export default function App() {
   const markerElsRef = useRef({})
   const markersRef = useRef({})
   const popupRef = useRef(null)
+  const directoryItemRefs = useRef({})
 
   const [places, setPlaces] = useState([])
   const [selected, setSelected] = useState(null)
@@ -44,39 +45,15 @@ export default function App() {
     const map = mapRef.current
     if (!map) return
 
-    const showPopup = () => {
-      if (popupRef.current) {
-        popupRef.current.remove()
-      }
-      const popup = new mapboxgl.Popup({ offset: 16, anchor: 'top' })
-        .setLngLat([place.lng, place.lat])
-        .setHTML(`
-            <div class="popup">
-                <div class="popup-title">${place.name}</div>
-                <div class="popup-sub">${place.address ?? 'No address provided'}</div>
-                <div class="popup-row">
-                    <span class="chip">${place.tag ?? 'Space'}</span>
-                        ${place.vibes ? `<span class="chip chip-soft">${place.vibes}</span>` : ''}
-                    ${place.url ? `<a class="popup-link" href="${place.url}" target="_blank" rel="noreferrer">Website</a>` : ''}
-                </div>
-            </div>
-        `)
-        .addTo(map)
-      popupRef.current = popup
-    }
-
-    if (animate && withPopup) {
-      map.once('moveend', showPopup)
-    } else if (withPopup) {
-      showPopup()
-    }
-
+    // Fly to the place location
     map.flyTo({
       center: [place.lng, place.lat],
-      zoom: 13,
+      zoom: 15, // Zoom in more to ensure individual markers are visible
       essential: true,
       duration: animate ? 800 : 0,
     })
+
+    // Popup will be shown by the selected effect
   }, [])
 
   useEffect(() => {
@@ -262,36 +239,44 @@ export default function App() {
     if (!map || !places.length) return
 
     const applyMarkers = () => {
+      // Remove existing markers
       Object.values(markersRef.current).forEach((marker) => marker.remove())
       markerElsRef.current = {}
       markersRef.current = {}
 
-      const bounds = new mapboxgl.LngLatBounds()
+      // Create HTML pill markers for each place
+      places
+        .filter((p) => !Number.isNaN(p.lng) && !Number.isNaN(p.lat))
+        .forEach((place) => {
+          const el = document.createElement('button')
+          el.className = 'pill-marker'
+          el.textContent = place.name
+          el.style.background = '#1c32de'
 
-      places.forEach((p) => {
-        if (Number.isNaN(p.lng) || Number.isNaN(p.lat)) return
+          el.addEventListener('mouseenter', () => el.classList.add('hover'))
+          el.addEventListener('mouseleave', () => el.classList.remove('hover'))
+          el.addEventListener('click', (e) => {
+            e.stopPropagation()
+            focusPlace(place, { withPopup: true, animate: true })
+          })
 
-        const el = document.createElement('button')
-        el.className = 'pill-marker'
-        el.textContent = p.name
- 
-        el.style.background = '#1c32de'
+          if (selected?.id === place.id) {
+            el.classList.add('active')
+          }
 
-        el.addEventListener('mouseenter', () => el.classList.add('hover'))
-        el.addEventListener('mouseleave', () => el.classList.remove('hover'))
-        el.addEventListener('click', (e) => {
-          e.stopPropagation()
-          focusPlace(p, { withPopup: true, animate: true })
+          const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+            .setLngLat([place.lng, place.lat])
+            .addTo(map)
+          markersRef.current[place.id] = marker
         })
 
-        markerElsRef.current[p.id] = el
 
-        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-          .setLngLat([p.lng, p.lat])
-          .addTo(map)
-
-        markersRef.current[p.id] = marker
-        bounds.extend([p.lng, p.lat])
+      // Fit bounds
+      const bounds = new mapboxgl.LngLatBounds()
+      places.forEach((p) => {
+        if (!Number.isNaN(p.lng) && !Number.isNaN(p.lat)) {
+          bounds.extend([p.lng, p.lat])
+        }
       })
 
       if (!bounds.isEmpty()) {
@@ -304,16 +289,57 @@ export default function App() {
     } else {
       map.once('load', applyMarkers)
     }
+
+    return () => {
+      // Remove markers
+      Object.values(markersRef.current).forEach((marker) => marker.remove())
+      markersRef.current = {}
+    }
   }, [places, focusPlace])
 
+  // Update selected place visual indicator when using clustering
   useEffect(() => {
-    Object.entries(markerElsRef.current).forEach(([id, el]) => {
-      if (selected?.id === id) {
-        el.classList.add('active')
-      } else {
-        el.classList.remove('active')
+    const map = mapRef.current
+    if (!map || !selected) {
+      if (popupRef.current) {
+        popupRef.current.remove()
+        popupRef.current = null
       }
-    })
+      return
+    }
+
+    // Remove existing popup
+    if (popupRef.current) {
+      popupRef.current.remove()
+      popupRef.current = null
+    }
+
+    // Show popup for selected place
+    const popup = new mapboxgl.Popup({ offset: 16, anchor: 'top' })
+      .setLngLat([selected.lng, selected.lat])
+      .setHTML(`
+        <div class="popup">
+          <div class="popup-title">${selected.name}</div>
+          <div class="popup-sub">${selected.address ?? 'No address provided'}</div>
+          <div class="popup-row">
+            <span class="chip">${selected.tag ?? 'Space'}</span>
+            ${selected.vibes ? `<span class="chip chip-soft">${selected.vibes}</span>` : ''}
+            ${selected.url ? `<a class="popup-link" href="${selected.url}" target="_blank" rel="noreferrer">Website</a>` : ''}
+          </div>
+        </div>
+      `)
+      .addTo(map)
+    popupRef.current = popup
+
+    // Scroll directory item into view
+    const directoryItem = directoryItemRefs.current[selected.id]
+    if (directoryItem) {
+      directoryItem.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'nearest',
+        inline: 'nearest'
+      })
+    }
   }, [selected])
 
   return (
@@ -417,6 +443,9 @@ export default function App() {
                     .map((place, index) => (
                     <motion.li
                       key={place.id}
+                      ref={(el) => {
+                        if (el) directoryItemRefs.current[place.id] = el
+                      }}
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0.08 + index * 0.05 }}
