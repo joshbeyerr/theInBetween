@@ -6,18 +6,41 @@ import About from './routes/About.jsx'
 import Login from './routes/Login.jsx'
 import AdminLogin from './routes/AdminLogin.jsx'
 import Admin from './routes/Admin.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './index.css'
 
 const router = createBrowserRouter([
-  { path: '/', element: <App /> },
-  { path: '/about', element: <About /> },
-  { path: '/login', element: <Login /> },
-  { path: '/admin-login', element: <AdminLogin /> },
-  { path: '/admin', element: <Admin /> },
+  { 
+    path: '/', 
+    element: <App />,
+    errorElement: <ErrorBoundary><div>Page not found</div></ErrorBoundary>
+  },
+  { 
+    path: '/about', 
+    element: <About />,
+    errorElement: <ErrorBoundary><div>Error loading about page</div></ErrorBoundary>
+  },
+  { 
+    path: '/login', 
+    element: <Login />,
+    errorElement: <ErrorBoundary><div>Error loading login page</div></ErrorBoundary>
+  },
+  { 
+    path: '/admin-login', 
+    element: <AdminLogin />,
+    errorElement: <ErrorBoundary><div>Error loading admin login</div></ErrorBoundary>
+  },
+  { 
+    path: '/admin', 
+    element: <Admin />,
+    errorElement: <ErrorBoundary><div>Error loading admin page</div></ErrorBoundary>
+  },
 ])
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
   </React.StrictMode>,
 )

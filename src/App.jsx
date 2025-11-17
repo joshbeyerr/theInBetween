@@ -139,68 +139,120 @@ export default function App() {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
 
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
-      pitch: 0,
-      bearing: 0,
-      attributionControl: false,
-    })
-
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left')
-    map.addControl(new mapboxgl.FullscreenControl(), 'top-left')
-    map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true }), 'top-left')
-    // Recenter control
-    class RecenterControl {
-      onAdd(m) {
-        this._map = m
-        this._container = document.createElement('div')
-        this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group'
-        const btn = document.createElement('button')
-        btn.type = 'button'
-        btn.setAttribute('aria-label', 'Recenter map')
-        btn.innerHTML = '⌖'
-        btn.style.fontSize = '16px'
-        btn.addEventListener('click', () => {
-          const map = this._map
-          const ids = Object.keys(markersRef.current || {})
-          if (ids.length > 0) {
-            const b = new mapboxgl.LngLatBounds()
-            ids.forEach((id) => {
-              const mk = markersRef.current[id]
-              try { b.extend(mk.getLngLat()) } catch {}
-            })
-            if (!b.isEmpty()) {
-              map.fitBounds(b, { padding: 80, duration: 700 })
-              return
-            }
-          }
-          map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 700 })
-        })
-        this._container.appendChild(btn)
-        return this._container
-      }
-      onRemove() {
-        this._container.parentNode && this._container.parentNode.removeChild(this._container)
-        this._map = undefined
-      }
+    // Check for WebGL support before initializing map
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    
+    if (!gl) {
+      setError('Your browser does not support WebGL, which is required to display the map. Please try using a different browser.')
+      setIsLoading(false)
+      return
     }
-    map.addControl(new RecenterControl(), 'top-left')
 
-    mapRef.current = map
+    let map
+    try {
+      map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: DEFAULT_CENTER,
+        zoom: DEFAULT_ZOOM,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false,
+        failIfMajorPerformanceCaveat: false, // Allow map to load even on slower devices
+      })
+
+      // Handle map errors
+      map.on('error', (e) => {
+        console.error('Mapbox error:', e)
+        if (e.error?.message?.includes('WebGL') || e.error?.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
+          setError('Your device may not support the required graphics features. Please try using a different browser or device.')
+        } else {
+          setError('There was an error loading the map. Please try refreshing the page.')
+        }
+        setIsLoading(false)
+      })
+
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left')
+      map.addControl(new mapboxgl.FullscreenControl(), 'top-left')
+      map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true }), 'top-left')
+      
+      // Recenter control
+      class RecenterControl {
+        onAdd(m) {
+          this._map = m
+          this._container = document.createElement('div')
+          this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group'
+          const btn = document.createElement('button')
+          btn.type = 'button'
+          btn.setAttribute('aria-label', 'Recenter map')
+          btn.innerHTML = '⌖'
+          btn.style.fontSize = '16px'
+          btn.addEventListener('click', () => {
+            const map = this._map
+            const ids = Object.keys(markersRef.current || {})
+            if (ids.length > 0) {
+              const b = new mapboxgl.LngLatBounds()
+              ids.forEach((id) => {
+                const mk = markersRef.current[id]
+                try { b.extend(mk.getLngLat()) } catch {}
+              })
+              if (!b.isEmpty()) {
+                map.fitBounds(b, { padding: 80, duration: 700 })
+                return
+              }
+            }
+            map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 700 })
+          })
+          this._container.appendChild(btn)
+          return this._container
+        }
+        onRemove() {
+          this._container.parentNode && this._container.parentNode.removeChild(this._container)
+          this._map = undefined
+        }
+      }
+      map.addControl(new RecenterControl(), 'top-left')
+
+      mapRef.current = map
+    } catch (err) {
+      console.error('Failed to initialize map:', err)
+      if (err.message?.includes('WebGL') || err.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
+        setError('Your device may not support the required graphics features. Please try using a different browser or device.')
+      } else {
+        setError('Failed to load the map. Please try refreshing the page.')
+      }
+      setIsLoading(false)
+      return
+    }
 
     return () => {
-      Object.values(markersRef.current).forEach((marker) => marker.remove())
+      Object.values(markersRef.current).forEach((marker) => {
+        try {
+          marker.remove()
+        } catch (err) {
+          console.error('Error removing marker:', err)
+        }
+      })
       markerElsRef.current = {}
       markersRef.current = {}
       if (popupRef.current) {
-        popupRef.current.remove()
+        try {
+          popupRef.current.remove()
+        } catch (err) {
+          console.error('Error removing popup:', err)
+        }
         popupRef.current = null
       }
-      mapRef.current = null
-      map.remove()
+      if (mapRef.current) {
+        const mapToRemove = mapRef.current
+        mapRef.current = null
+        try {
+          mapToRemove.remove()
+        } catch (err) {
+          console.error('Error removing map:', err)
+        }
+      }
     }
   }, [])
 
