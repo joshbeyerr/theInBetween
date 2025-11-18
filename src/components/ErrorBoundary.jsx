@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 class ErrorBoundary extends React.Component {
@@ -30,7 +31,9 @@ class ErrorBoundary extends React.Component {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="masthead-left">
-              <img src="/favicon.jpg" alt="In-Between" className="mark" />
+              <Link to="/">
+                <img src="/favicon.jpg" alt="In-Between" className="mark" />
+              </Link>
               <div className="masthead-copy">
                 <span>In-Between Studio</span>
                 <strong>Field Notes / 2025</strong>

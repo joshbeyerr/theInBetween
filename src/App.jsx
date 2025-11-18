@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { motion } from 'framer-motion'
@@ -38,10 +39,75 @@ export default function App() {
   const [error, setError] = useState(null)
   const [mapError, setMapError] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [useStaticMap, setUseStaticMap] = useState(false)
+  const [staticMapUrl, setStaticMapUrl] = useState(null)
+
+  // Generate static map URL using Mapbox Static Images API
+  const generateStaticMap = useCallback((placesToShow) => {
+    if (!placesToShow || placesToShow.length === 0) {
+      // Default map if no places
+      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${DEFAULT_CENTER[0]},${DEFAULT_CENTER[1]},${DEFAULT_ZOOM}/800x600@2x?access_token=${mapboxgl.accessToken}`
+      setStaticMapUrl(url)
+      return
+    }
+
+    // Calculate bounds to fit all places
+    const lngs = placesToShow.map(p => p.lng).filter(Boolean)
+    const lats = placesToShow.map(p => p.lat).filter(Boolean)
+    
+    if (lngs.length === 0 || lats.length === 0) {
+      const url = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${DEFAULT_CENTER[0]},${DEFAULT_CENTER[1]},${DEFAULT_ZOOM}/800x600@2x?access_token=${mapboxgl.accessToken}`
+      setStaticMapUrl(url)
+      return
+    }
+
+    const minLng = Math.min(...lngs)
+    const maxLng = Math.max(...lngs)
+    const minLat = Math.min(...lats)
+    const maxLat = Math.max(...lats)
+    
+    const centerLng = (minLng + maxLng) / 2
+    const centerLat = (minLat + maxLat) / 2
+    
+    // Calculate zoom level based on bounds
+    const latDiff = maxLat - minLat
+    const lngDiff = maxLng - minLng
+    const maxDiff = Math.max(latDiff, lngDiff)
+    let zoom = 11
+    if (maxDiff > 0.1) zoom = 10
+    if (maxDiff > 0.2) zoom = 9
+    if (maxDiff < 0.05) zoom = 12
+    if (maxDiff < 0.02) zoom = 13
+
+    // Build markers overlay string
+    const markers = placesToShow
+      .filter(p => p.lat && p.lng)
+      .map((p, idx) => {
+        const color = palette[p.paletteKey] || palette.default
+        // Convert hex to RGB for Mapbox API
+        const r = parseInt(color.slice(1, 3), 16)
+        const g = parseInt(color.slice(3, 5), 16)
+        const b = parseInt(color.slice(5, 7), 16)
+        return `pin-s+${r},${g},${b}(${p.lng},${p.lat})`
+      })
+      .join(',')
+
+    const baseUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static`
+    const overlay = markers ? `${markers}/` : ''
+    const url = `${baseUrl}/${overlay}${centerLng},${centerLat},${zoom}/800x600@2x?access_token=${mapboxgl.accessToken}`
+    
+    setStaticMapUrl(url)
+  }, [])
 
   const focusPlace = useCallback((place, { withPopup = true, animate = true } = {}) => {
     if (!place) return
     setSelected(place)
+    
+    if (useStaticMap) {
+      // For static map, just update selection (can't pan/zoom)
+      return
+    }
+    
     const map = mapRef.current
     if (!map) return
 
@@ -54,7 +120,7 @@ export default function App() {
     })
 
     // Popup will be shown by the selected effect
-  }, [])
+  }, [useStaticMap])
 
   useEffect(() => {
     let isMounted = true
@@ -122,7 +188,9 @@ export default function App() {
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
     
     if (!gl) {
-      setMapError('Your browser does not support WebGL, which is required to display the map. Please try using a different browser.')
+      // Fallback to static map
+      setUseStaticMap(true)
+      generateStaticMap(places.length > 0 ? places : [])
       setIsLoading(false)
       return
     }
@@ -144,11 +212,14 @@ export default function App() {
       map.on('error', (e) => {
         console.error('Mapbox error:', e)
         if (e.error?.message?.includes('WebGL') || e.error?.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
-          setMapError('Your device may not support the required graphics features. Please try using a different browser or device.')
+          // Fallback to static map
+          setUseStaticMap(true)
+          generateStaticMap(places)
+          setIsLoading(false)
         } else {
           setMapError('There was an error loading the map. Please try refreshing the page.')
+          setIsLoading(false)
         }
-        setIsLoading(false)
       })
 
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left')
@@ -196,12 +267,16 @@ export default function App() {
     } catch (err) {
       console.error('Failed to initialize map:', err)
       if (err.message?.includes('WebGL') || err.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
-        setMapError('Your device may not support the required graphics features. Please try using a different browser or device.')
+        // Fallback to static map
+        setUseStaticMap(true)
+        generateStaticMap(places)
+        setIsLoading(false)
+        return
       } else {
         setMapError('Failed to load the map. Please try refreshing the page.')
+        setIsLoading(false)
+        return
       }
-      setIsLoading(false)
-      return
     }
 
     return () => {
@@ -233,6 +308,13 @@ export default function App() {
       }
     }
   }, [])
+
+  // Regenerate static map when places change and we're using static map
+  useEffect(() => {
+    if (useStaticMap && places.length > 0) {
+      generateStaticMap(places)
+    }
+  }, [places, useStaticMap, generateStaticMap])
 
   useEffect(() => {
     const map = mapRef.current
@@ -351,7 +433,9 @@ export default function App() {
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="masthead-left">
-          <img src="/favicon.jpg" alt="In-Between" className="mark" />
+          <Link to="/">
+            <img src="/favicon.jpg" alt="In-Between" className="mark" />
+          </Link>
           <div className="masthead-copy">
             <span>The In-Between Project</span>
             <strong>Updated November 2025</strong>
@@ -492,7 +576,38 @@ export default function App() {
             whileHover={{ scale: 1.01, translateY: -4 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            {mapError ? (
+            {useStaticMap && staticMapUrl ? (
+              <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                <img 
+                  src={staticMapUrl} 
+                  alt="Map of creative spaces" 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover',
+                    borderRadius: '8px'
+                  }} 
+                />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  left: '12px',
+                  right: '12px',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  padding: '12px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  fontSize: '12px',
+                  lineHeight: '1.5',
+                  color: 'rgba(0, 0, 0, 0.7)'
+                }}>
+                  <strong style={{ display: 'block', marginBottom: '4px', color: 'rgba(0, 0, 0, 0.9)' }}>
+                    Limited Map Features
+                  </strong>
+                  Your device is incompatible with our interactive map, so features are limited. You can still browse all spaces using the directory list.
+                </div>
+              </div>
+            ) : mapError ? (
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 

@@ -1304,7 +1304,7 @@ body {
 /* Submission Form Styles */
 .submission-form {
   width: 100%;
-  max-width: 900px;
+  max-width: 600px;
   margin: 0 auto;
   padding: clamp(24px, 4vw, 40px);
   box-sizing: border-box;
