@@ -196,90 +196,185 @@ export default function App() {
     }
 
     let map
-    try {
-      map = new mapboxgl.Map({
-        container: mapContainerRef.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: DEFAULT_CENTER,
-        zoom: DEFAULT_ZOOM,
-        pitch: 0,
-        bearing: 0,
-        attributionControl: false,
-        failIfMajorPerformanceCaveat: false, // Allow map to load even on slower devices
-      })
+    let resizeTimeout
+    let handleOrientationChange
+    
+    const handleResize = () => {
+      // Debounce resize to avoid excessive calls
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        if (map && map.loaded()) {
+          try {
+            map.resize()
+          } catch (err) {
+            console.error('Error resizing map:', err)
+          }
+        }
+      }, 150)
+    }
 
-      // Handle map errors
-      map.on('error', (e) => {
+    const initializeMap = () => {
+      if (!mapContainerRef.current || mapRef.current) return
+
+      // Ensure container has dimensions before initializing
+      const container = mapContainerRef.current
+      if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+        // Wait a bit for layout to settle, especially on mobile
+        setTimeout(initializeMap, 100)
+        return
+      }
+
+      try {
+
+        map = new mapboxgl.Map({
+          container: mapContainerRef.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: DEFAULT_CENTER,
+          zoom: DEFAULT_ZOOM,
+          pitch: 0,
+          bearing: 0,
+          attributionControl: false,
+          failIfMajorPerformanceCaveat: false, // Allow map to load even on slower devices
+        })
+
+        // Handle map errors - catch ALL errors, not just WebGL
+        map.on('error', (e) => {
         console.error('Mapbox error:', e)
-        if (e.error?.message?.includes('WebGL') || e.error?.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
-          // Fallback to static map
+        const errorMsg = e.error?.message || e.error?.toString() || ''
+        
+        // Check for various error types
+        if (
+          errorMsg.includes('WebGL') || 
+          errorMsg.includes('ALIASED_POINT_SIZE_RANGE') ||
+          errorMsg.includes('Failed to initialize WebGL') ||
+          errorMsg.includes('Context lost')
+        ) {
+          // Fallback to static map for WebGL-related errors
           setUseStaticMap(true)
           generateStaticMap(places)
           setIsLoading(false)
+        } else if (
+          errorMsg.includes('token') ||
+          errorMsg.includes('authentication') ||
+          errorMsg.includes('401') ||
+          errorMsg.includes('403')
+        ) {
+          // Token/authentication errors
+          setMapError('Map authentication error. Please check your Mapbox token.')
+          setIsLoading(false)
         } else {
-          setMapError('There was an error loading the map. Please try refreshing the page.')
+          // Other errors - try static map as fallback
+          console.warn('Map error, falling back to static map:', errorMsg)
+          setUseStaticMap(true)
+          generateStaticMap(places)
           setIsLoading(false)
         }
       })
 
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left')
-      map.addControl(new mapboxgl.FullscreenControl(), 'top-left')
-      map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true }), 'top-left')
-      
-      // Recenter control
-      class RecenterControl {
-        onAdd(m) {
-          this._map = m
-          this._container = document.createElement('div')
-          this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group'
-          const btn = document.createElement('button')
-          btn.type = 'button'
-          btn.setAttribute('aria-label', 'Recenter map')
-          btn.innerHTML = '⌖'
-          btn.style.fontSize = '16px'
-          btn.addEventListener('click', () => {
-            const map = this._map
-            const ids = Object.keys(markersRef.current || {})
-            if (ids.length > 0) {
-              const b = new mapboxgl.LngLatBounds()
-              ids.forEach((id) => {
-                const mk = markersRef.current[id]
-                try { b.extend(mk.getLngLat()) } catch {}
-              })
-              if (!b.isEmpty()) {
-                map.fitBounds(b, { padding: 80, duration: 700 })
-                return
+        // Handle successful load
+        map.once('load', () => {
+          // Ensure map is properly sized after load
+          try {
+            map.resize()
+          } catch (err) {
+            console.error('Error resizing map on load:', err)
+          }
+          setIsLoading(false)
+        })
+
+        // Add resize handler for viewport/orientation changes
+        handleOrientationChange = () => {
+          // Delay resize after orientation change to allow layout to settle
+          setTimeout(() => {
+            if (map && map.loaded()) {
+              try {
+                map.resize()
+              } catch (err) {
+                console.error('Error resizing map on orientation change:', err)
               }
             }
-            map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 700 })
-          })
-          this._container.appendChild(btn)
-          return this._container
+          }, 300)
         }
-        onRemove() {
-          this._container.parentNode && this._container.parentNode.removeChild(this._container)
-          this._map = undefined
-        }
-      }
-      map.addControl(new RecenterControl(), 'top-left')
+        window.addEventListener('resize', handleResize)
+        window.addEventListener('orientationchange', handleOrientationChange)
 
-      mapRef.current = map
-    } catch (err) {
-      console.error('Failed to initialize map:', err)
-      if (err.message?.includes('WebGL') || err.message?.includes('ALIASED_POINT_SIZE_RANGE')) {
-        // Fallback to static map
-        setUseStaticMap(true)
-        generateStaticMap(places)
-        setIsLoading(false)
-        return
-      } else {
-        setMapError('Failed to load the map. Please try refreshing the page.')
-        setIsLoading(false)
-        return
+        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-left')
+        map.addControl(new mapboxgl.FullscreenControl(), 'top-left')
+        map.addControl(new mapboxgl.GeolocateControl({ trackUserLocation: true }), 'top-left')
+        
+        // Recenter control
+        class RecenterControl {
+          onAdd(m) {
+            this._map = m
+            this._container = document.createElement('div')
+            this._container.className = 'mapboxgl-ctrl mapboxgl-ctrl-group'
+            const btn = document.createElement('button')
+            btn.type = 'button'
+            btn.setAttribute('aria-label', 'Recenter map')
+            btn.innerHTML = '⌖'
+            btn.style.fontSize = '16px'
+            btn.addEventListener('click', () => {
+              const map = this._map
+              const ids = Object.keys(markersRef.current || {})
+              if (ids.length > 0) {
+                const b = new mapboxgl.LngLatBounds()
+                ids.forEach((id) => {
+                  const mk = markersRef.current[id]
+                  try { b.extend(mk.getLngLat()) } catch {}
+                })
+                if (!b.isEmpty()) {
+                  map.fitBounds(b, { padding: 80, duration: 700 })
+                  return
+                }
+              }
+              map.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 700 })
+            })
+            this._container.appendChild(btn)
+            return this._container
+          }
+          onRemove() {
+            this._container.parentNode && this._container.parentNode.removeChild(this._container)
+            this._map = undefined
+          }
+        }
+        map.addControl(new RecenterControl(), 'top-left')
+
+        mapRef.current = map
+      } catch (err) {
+        console.error('Failed to initialize map:', err)
+        const errorMsg = err.message || err.toString() || ''
+        
+        if (
+          errorMsg.includes('WebGL') || 
+          errorMsg.includes('ALIASED_POINT_SIZE_RANGE') ||
+          errorMsg.includes('Failed to initialize WebGL')
+        ) {
+          // Fallback to static map for WebGL errors
+          setUseStaticMap(true)
+          generateStaticMap(places)
+          setIsLoading(false)
+          return
+        } else {
+          // For other errors, try static map as fallback
+          console.warn('Map initialization error, falling back to static map:', errorMsg)
+          setUseStaticMap(true)
+          generateStaticMap(places)
+          setIsLoading(false)
+          return
+        }
       }
     }
 
+    // Start initialization
+    initializeMap()
+
     return () => {
+      clearTimeout(resizeTimeout)
+      window.removeEventListener('resize', handleResize)
+      if (handleOrientationChange) {
+        window.removeEventListener('orientationchange', handleOrientationChange)
+      }
+      
       Object.values(markersRef.current).forEach((marker) => {
         try {
           marker.remove()

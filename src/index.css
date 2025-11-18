@@ -641,6 +641,8 @@ body {
 
   .map-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: auto;
   }
 
   .info-grid {
@@ -650,11 +652,16 @@ body {
   .directory {
     order: 2;
     border-radius: 20px;
+    height: auto;
+    min-height: 300px;
+    max-height: 400px;
   }
 
   .map-wrap {
     order: 1;
     border-radius: 22px;
+    height: 50vh;
+    min-height: 400px;
   }
 }
 
@@ -683,8 +690,23 @@ body {
     max-width: 100%;
   }
 
+  .map-shell {
+    height: auto;
+  }
+
+  .map-wrap {
+    height: 50vh;
+    min-height: 350px;
+  }
+
   .map {
-    height: 58vh;
+    height: 100%;
+    min-height: 350px;
+  }
+
+  .directory {
+    min-height: 250px;
+    max-height: 350px;
   }
 }
 
