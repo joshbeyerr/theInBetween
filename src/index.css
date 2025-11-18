@@ -932,6 +932,193 @@ body {
   transform: none;
 }
 
+/* Admin Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 32px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid #E7E4E6;
+}
+
+.admin-tab {
+  padding: 12px 24px;
+  background: #ffffff;
+  border: none;
+  border-right: 1px solid #E7E4E6;
+  border-radius: 0;
+  font-family: 'Reddit Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.admin-tab:last-child {
+  border-right: none;
+}
+
+.admin-tab:hover {
+  background: #f9fafb;
+  color: #2434ab;
+}
+
+.admin-tab-active {
+  background: #2434ab;
+  color: #ffffff;
+  border-right-color: #2434ab;
+}
+
+.admin-tab-active:hover {
+  background: #1e2a8a;
+  color: #ffffff;
+}
+
+/* Admin Submissions */
+.admin-submissions-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-loading,
+.admin-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6b7280;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+}
+
+.admin-submissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-submission-item {
+  background: #ffffff;
+  border: 1px solid #E7E4E6;
+  border-radius: 12px;
+  padding: 24px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-submission-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+
+.admin-submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.admin-submission-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  flex: 1;
+}
+
+.admin-submission-date {
+  font-family: 'Reddit Mono', monospace;
+  font-size: 11px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.admin-submission-field {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-submission-field:last-child {
+  margin-bottom: 0;
+}
+
+.admin-submission-label {
+  font-weight: 600;
+  color: #4b5563;
+  min-width: 120px;
+  flex-shrink: 0;
+}
+
+.admin-submission-value {
+  color: #1f2937;
+  flex: 1;
+}
+
+.admin-submission-email {
+  color: #2434ab;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.admin-submission-email:hover {
+  color: #1e2a8a;
+  text-decoration: underline;
+}
+
+/* Admin Edit */
+.admin-edit-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-space-selector {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #E7E4E6;
+  border-radius: 0;
+}
+
+.admin-space-select-label {
+  display: block;
+  font-family: 'Reddit Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4b5563;
+  margin-bottom: 12px;
+}
+
+.admin-space-select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #E7E4E6;
+  border-radius: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  color: #1f2937;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.admin-space-select:focus {
+  border-color: #2434ab;
+  box-shadow: 0 0 0 3px rgba(36, 52, 171, 0.1);
+}
+
 /* Hours Input Styles */
 .admin-hours-container {
   display: flex;
@@ -1116,9 +1303,11 @@ body {
 
 /* Submission Form Styles */
 .submission-form {
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
   padding: clamp(24px, 4vw, 40px);
+  box-sizing: border-box;
 
   background: #f6f4f5;
   border: 1px solid #E7E4E6;
@@ -1194,6 +1383,10 @@ body {
   margin-bottom: 20px;
   font-size: 14px;
   font-family: "Space Grotesk", sans-serif;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .submission-status-success {

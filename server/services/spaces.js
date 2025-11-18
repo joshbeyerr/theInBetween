@@ -108,3 +108,61 @@ export const createSpace = async (spaceData) => {
   return data
 }
 
+export const updateSpace = async (id, spaceData) => {
+  if (!supabase) throw new Error('Supabase client not configured')
+
+  const {
+    name,
+    address,
+    industry,
+    vibes,
+    pricing,
+    price,
+    website,
+    contact,
+    hours,
+    lat,
+    long,
+  } = spaceData
+
+  if (!name || !name.trim()) {
+    throw new Error('Name is required')
+  }
+
+  // Prepare the data object, only including defined fields
+  const updateData = {
+    name: name.trim(),
+    address: address?.trim() || null,
+    industry: industry?.trim() || null,
+    vibes: vibes?.trim() || null,
+    pricing: pricing?.trim() || null,
+    price: price != null && price !== '' ? Number(price) : null,
+    website: website?.trim() || null,
+    contact: contact?.trim() || null,
+    hours: hours || null,
+    lat: lat != null && lat !== '' ? Number(lat) : null,
+    long: long != null && long !== '' ? Number(long) : null,
+  }
+
+  // If address is provided but no coordinates, try to geocode
+  if (updateData.address && (!isValidCoord(updateData.lat) || !isValidCoord(updateData.long))) {
+    try {
+      const geocodeResult = await geocodeAddress(updateData.address)
+      if (geocodeResult) {
+        updateData.lat = geocodeResult.lat
+        updateData.long = geocodeResult.lng
+      }
+    } catch (err) {
+      console.warn('Geocoding failed during space update:', err.message)
+      // Continue without coordinates if geocoding fails
+    }
+  }
+
+  const { data, error } = await supabase.from('spaces').update(updateData).eq('id', id).select().single()
+
+  if (error) throw error
+  if (!data) throw new Error('Failed to update space')
+
+  return data
+}
+

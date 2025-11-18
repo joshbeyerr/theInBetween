@@ -34,3 +34,15 @@ export const createSubmission = async (submissionData) => {
   return data
 }
 
+export const listSubmissions = async () => {
+  if (!supabase) throw new Error('Supabase client not configured')
+
+  const { data, error } = await supabase
+    .from('submissions')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
