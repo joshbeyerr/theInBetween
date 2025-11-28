@@ -1,0 +1,213 @@
+.add-space-popup {
+  position: absolute;
+  top: 60px;
+  right: 24px;
+  width: 320px;
+  max-width: calc(100% - 48px);
+  background: #090909;
+  border: 1px solid var(--color-gray-800);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.add-space-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--color-gray-400);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.add-space-close:hover {
+  background: var(--color-gray-800);
+  color: var(--color-white);
+}
+
+.add-space-step {
+  padding: 0;
+}
+
+.add-space-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin: 0 0 4px 0;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.add-space-subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-gray-400);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.add-space-form-group {
+  margin-bottom: 16px;
+}
+
+.add-space-form-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-gray-300);
+  margin-bottom: 6px;
+}
+
+.add-space-form-group .required {
+  color: var(--color-gray-500);
+}
+
+.add-space-form-group input,
+.add-space-form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--color-gray-800);
+  border: 1px solid var(--color-gray-700);
+  border-radius: 8px;
+  color: var(--color-white);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.add-space-form-group input:focus,
+.add-space-form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-gray-600);
+  background: var(--color-gray-850);
+}
+
+.add-space-form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.add-space-form-group small {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  margin-top: 6px;
+}
+
+.add-space-error {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.875rem;
+}
+
+.add-space-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.add-space-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.add-space-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.add-space-btn-primary {
+  background: var(--color-white);
+  color: var(--color-gray-950);
+}
+
+.add-space-btn-primary:hover:not(:disabled) {
+  background: var(--color-gray-100);
+}
+
+.add-space-btn-secondary {
+  background: var(--color-gray-800);
+  color: var(--color-gray-300);
+  border: 1px solid var(--color-gray-700);
+}
+
+.add-space-btn-secondary:hover:not(:disabled) {
+  background: var(--color-gray-700);
+  color: var(--color-white);
+}
+
+.add-space-success {
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.add-space-success-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 auto 16px;
+}
+
+.add-space-success .add-space-title {
+  margin-bottom: 12px;
+}
+
+.add-space-success .add-space-subtitle {
+  margin-bottom: 32px;
+}
+
+.add-space-popup::-webkit-scrollbar {
+  width: 8px;
+}
+
+.add-space-popup::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.add-space-popup::-webkit-scrollbar-thumb {
+  background: var(--color-gray-700);
+  border-radius: 4px;
+}
+
+.add-space-popup::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-600);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .add-space-popup {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-width: none;
+  }
+}
+

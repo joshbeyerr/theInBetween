@@ -1,0 +1,94 @@
+.login-page {
+  min-height: 100vh;
+  background: var(--color-gray-950);
+  color: var(--color-white);
+}
+
+.login-main {
+  padding-top: 3rem;
+  min-height: 100vh;
+}
+
+.login-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 80px 2rem;
+}
+
+.login-title-section {
+  margin-bottom: 80px;
+}
+
+.login-title-small {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-gray-400);
+  margin-bottom: 16px;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 500;
+}
+
+.login-title-main {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--color-white);
+  margin: 0;
+  font-family: "Helvetica Neue", "Helvetica", sans-serif;
+}
+
+.login-content {
+  max-width: 600px;
+}
+
+.login-intro {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.7;
+  color: var(--color-gray-300);
+  margin: 0 0 60px 0;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.login-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: #090909;
+  border: 1px solid var(--color-gray-800);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.login-coming-soon-icon {
+  font-size: 3rem;
+  margin-bottom: 24px;
+  display: inline-block;
+}
+
+.login-coming-soon p {
+  font-size: 1.125rem;
+  color: var(--color-gray-400);
+  margin: 0;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 60px 1.5rem;
+  }
+
+  .login-title-section {
+    margin-bottom: 60px;
+  }
+
+  .login-coming-soon {
+    padding: 40px 24px;
+  }
+}
+

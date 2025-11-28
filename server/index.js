@@ -160,6 +160,30 @@ app.get('/api/geocode', async (req, res) => {
   }
 })
 
+app.post('/api/geocode', async (req, res) => {
+  try {
+    const { address } = req.body
+
+    if (!address || typeof address !== 'string' || !address.trim()) {
+      return res.status(400).json({ error: 'Missing or invalid address in request body' })
+    }
+
+    const result = await geocodeAddress(address.trim())
+    if (!result) {
+      return res.status(404).json({ error: 'No results found for that address' })
+    }
+
+    res.json({
+      lat: result.lat,
+      lng: result.lng,
+      place_name: result.place_name,
+    })
+  } catch (err) {
+    console.error('POST /api/geocode failed:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
 app.get('/api/places/search', async (req, res) => {
   try {
     const query = req.query.q?.toString().trim()

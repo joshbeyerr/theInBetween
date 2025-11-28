@@ -1,0 +1,117 @@
+.about-page {
+  min-height: 100vh;
+  background: var(--color-gray-950);
+  color: var(--color-white);
+}
+
+.about-main {
+  padding-top: 3rem;
+  min-height: 100vh;
+}
+
+.about-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 2rem;
+}
+
+.about-title-section {
+  margin-bottom: 80px;
+}
+
+.about-title-small {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--color-gray-400);
+  margin-bottom: 16px;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 500;
+}
+
+.about-title-main {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--color-white);
+  margin: 0;
+  font-family: "Helvetica Neue", "Helvetica", sans-serif;
+}
+
+.about-title-accent {
+  display: inline-block;
+  margin-left: 0.15em;
+  transform: translateX(0.1em);
+}
+
+.about-content {
+  margin-bottom: 40px;
+  max-width: 700px;
+}
+
+.about-intro {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-gray-300);
+  margin: 0 0 20px 0;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.about-sections {
+  margin-top: 20px;
+  max-width: 800px;
+}
+
+.about-section-item {
+  padding: 24px 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.about-section-item h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-white);
+  margin: 0 0 8px 0;
+  font-family: "Helvetica Neue", "Helvetica", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.about-section-item p {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-gray-300);
+  margin: 0;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.about-section-divider {
+  height: 1px;
+  background: var(--color-gray-800);
+  margin-top: 24px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .about-container {
+    padding: 60px 1.5rem;
+  }
+
+  .about-title-section {
+    margin-bottom: 60px;
+  }
+
+  .about-content {
+    margin-bottom: 60px;
+  }
+
+  .about-sections {
+    margin-top: 60px;
+  }
+
+  .about-section-item {
+    padding: 24px 0;
+  }
+}
+
