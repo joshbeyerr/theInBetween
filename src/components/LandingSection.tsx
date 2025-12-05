@@ -31,7 +31,6 @@ export function LandingSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const hasScrolledToMapRef = useRef(false);
   const progressRef = useRef(0);
-  const isLockedRef = useRef(true);
 
   // Define organic curved path from top center moving downward
   const threadPath = useMemo(() => {
@@ -110,133 +109,91 @@ export function LandingSection() {
     }
   }, []);
 
-  // Handle scroll to track progress - scroll-locked animation effect
+  // Automatic animation - runs for 2 seconds then scrolls to map (skip on mobile)
   useEffect(() => {
-    // Force reset on mount - always start fresh
+    // Detect if device is mobile
+    const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) ||
+                     window.innerWidth <= 768;
+    
+    // Reset on mount
     setScrollProgress(0);
     progressRef.current = 0;
     hasScrolledToMapRef.current = false;
-    isLockedRef.current = true;
     
-    const windowHeight = window.innerHeight;
-    const animationScrollDistance = windowHeight; // 100vh equivalent scroll distance
-    
-    // Lock scroll position while animation is in progress
-    const lockScroll = () => {
-      if (progressRef.current < 1 && window.scrollY > 0) {
-        window.scrollTo(0, 0);
-      }
-    };
-    
-    // Update progress and sync with state
-    const updateProgress = (newProgress: number) => {
-      progressRef.current = Math.max(0, Math.min(1, newProgress));
-      setScrollProgress(progressRef.current);
-      
-      // If animation completes, unlock scrolling
-      if (progressRef.current >= 1 && isLockedRef.current) {
-        isLockedRef.current = false;
-        hasScrolledToMapRef.current = true;
-      } else if (progressRef.current < 1 && !isLockedRef.current) {
-        isLockedRef.current = true;
-      }
-    };
-    
-    // Handle wheel events to drive animation progress
-    const handleWheel = (e: WheelEvent) => {
-      // If animation is complete, allow normal scrolling
-      if (!isLockedRef.current) {
-        return;
-      }
-      
-      // Prevent default scroll behavior during animation
-      e.preventDefault();
-      
-      // Calculate progress increment based on scroll delta
-      const scrollDelta = e.deltaY;
-      const progressIncrement = Math.abs(scrollDelta) / animationScrollDistance;
-      
-      // Update progress based on scroll direction
-      if (scrollDelta > 0) {
-        // Scrolling down - increase progress
-        updateProgress(progressRef.current + progressIncrement * 0.5);
-      } else {
-        // Scrolling up - decrease progress
-        updateProgress(progressRef.current - progressIncrement * 0.5);
-      }
-      
-      // Lock scroll position to top
-      lockScroll();
-    };
-    
-    // Handle scroll events to keep position locked
-    const handleScroll = () => {
-      if (isLockedRef.current) {
-        lockScroll();
-      }
-    };
-    
-    // Handle touch events for mobile
-    let touchStartY = 0;
-    let lastProgressUpdate = 0;
-    
-    const handleTouchStart = (e: TouchEvent) => {
-      if (!isLockedRef.current) return;
-      touchStartY = e.touches[0].clientY;
-      lastProgressUpdate = Date.now();
-    };
-    
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isLockedRef.current) return;
-      e.preventDefault();
-      
-      const now = Date.now();
-      // Throttle updates to avoid too many state changes
-      if (now - lastProgressUpdate < 16) return; // ~60fps
-      lastProgressUpdate = now;
-      
-      const touchCurrentY = e.touches[0].clientY;
-      const touchDelta = touchStartY - touchCurrentY;
-      const progressIncrement = Math.abs(touchDelta) / animationScrollDistance;
-      
-      if (touchDelta > 10) {
-        // Swiping down - increase progress
-        updateProgress(progressRef.current + progressIncrement * 0.8);
-        touchStartY = touchCurrentY; // Update reference point
-      } else if (touchDelta < -10) {
-        // Swiping up - decrease progress
-        updateProgress(progressRef.current - progressIncrement * 0.8);
-        touchStartY = touchCurrentY; // Update reference point
-      }
-      
-      lockScroll();
-    };
+    // Ensure we start at top
+    window.scrollTo(0, 0);
     
     // Prevent scroll restoration
     if (history.scrollRestoration) {
       history.scrollRestoration = 'manual';
     }
     
-    // Ensure we start at top
-    window.scrollTo(0, 0);
+    // If mobile, skip animation and go straight to map
+    if (isMobile) {
+      progressRef.current = 1;
+      setScrollProgress(1);
+      hasScrolledToMapRef.current = true;
+      // Small delay to ensure page is loaded
+      setTimeout(() => {
+        scrollToMap();
+      }, 100);
+      return;
+    }
     
-    // Add event listeners
-    window.addEventListener("wheel", handleWheel, { passive: false });
+    // Desktop: Run animation
+    // Lock scroll during animation
+    const lockScroll = () => {
+      if (progressRef.current < 1 && window.scrollY > 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    
+    // Automatic animation progress over 2 seconds
+    const animationDuration = 2000; // 2 seconds
+    const startTime = Date.now();
+    let animationFrame: number;
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(1, elapsed / animationDuration);
+      
+      progressRef.current = progress;
+      setScrollProgress(progress);
+      
+      // Lock scroll while animating
+      lockScroll();
+      
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      } else {
+        // Animation complete - scroll to map
+        hasScrolledToMapRef.current = true;
+        scrollToMap();
+      }
+    };
+    
+    // Start animation after a brief delay
+    animationFrame = requestAnimationFrame(animate);
+    
+    // Lock scroll during animation
+    const handleScroll = () => {
+      if (progressRef.current < 1) {
+        lockScroll();
+      }
+    };
+    
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: false });
     
     return () => {
-      window.removeEventListener("wheel", handleWheel);
+      cancelAnimationFrame(animationFrame);
       window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
     };
-  }, []);
+  }, [scrollToMap]);
 
   const isActive = scrollProgress > 0;
 
-  // Handle spacebar to complete animation or scroll to map
+  // Allow spacebar to skip animation and go straight to map
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Don't prevent spacebar if user is typing in an input, textarea, or contenteditable element
@@ -246,20 +203,13 @@ export function LandingSection() {
                        target.isContentEditable ||
                        target.closest('input, textarea, [contenteditable]');
       
-      // Allow spacebar to skip animation or scroll to map
+      // Allow spacebar to skip animation and go to map
       if (e.code === 'Space' && !isTyping) {
         e.preventDefault();
-        
-        // If animation is still in progress, complete it first
-        if (isLockedRef.current && progressRef.current < 1) {
-          progressRef.current = 1;
-          setScrollProgress(1);
-          isLockedRef.current = false;
-          hasScrolledToMapRef.current = true;
-        } else {
-          // Animation complete, scroll to map
-          scrollToMap();
-        }
+        progressRef.current = 1;
+        setScrollProgress(1);
+        hasScrolledToMapRef.current = true;
+        scrollToMap();
       }
     };
 
@@ -512,40 +462,6 @@ export function LandingSection() {
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-      <motion.div 
-        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-4"
-        animate={{ 
-          opacity: scrollProgress > 0.1 ? 0 : 1,
-          y: scrollProgress > 0.1 ? 20 : 0,
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.div
-          className="w-6 h-10 border-2 border-gray-400 rounded-full flex items-start justify-center p-2"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="w-1.5 h-3 bg-gray-400 rounded-full"></div>
-        </motion.div>
-      </motion.div>
-
-      {/* Scroll to Explore Text */}
-      <motion.div 
-        className="fixed bottom-8 right-8 z-30"
-        animate={{ 
-          opacity: scrollProgress > 0.1 ? 0 : 1,
-          y: scrollProgress > 0.1 ? 20 : 0,
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        <div 
-          className="text-white/60 text-sm tracking-wide text-right"
-          style={{ fontFamily: '"Reddit Mono", monospace' }}
-        >
-          Scroll to explore... or hit space
-        </div>
-      </motion.div>
 
 
       {/* Custom Cursor - Commented out for now */}
